@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    /* Base Options */
+    "target": "es2020",            /* Generates modern JS (supports async/await better than ES6) */
+    "module": "commonjs",          /* Standard Node.js module system (require/module.exports) */
+    "moduleResolution": "node",    /* Helps TS find modules in node_modules */
+    
+    /* Directory Options - Like Maven/Gradle structure */
+    "rootDir": "./src",            /* Where your .ts files live */
+    "outDir": "./dist",            /* Where the compiled .js files go (like the 'target' folder in Java) */
+    
+    /* Strictness - The "Safety" checks */
+    "strict": true,                /* Turns on all strict type checking options */
+    "noImplicitAny": true,         /* Throws error if you don't define a type (prevents "lazy" coding) */
+    
+    /* Interop Options */
+    "esModuleInterop": true,       /* Allows you to fix imports (e.g., import express from 'express') */
+    "skipLibCheck": true,          /* CRITICAL: Ignores errors inside library files (node_modules) so you don't get stuck debugging other people's code */
+    "forceConsistentCasingInFileNames": true /* Prevents issues between Windows/Mac file paths */
+  },
+  "include": ["src/**/*"],         /* Only compile files inside src */
+  "exclude": ["node_modules"]      /* Definitely don't try to compile your libraries */
+}
