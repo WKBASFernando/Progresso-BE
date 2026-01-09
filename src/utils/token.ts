@@ -8,13 +8,11 @@ const JWT_SECRET = process.env.JWT_SECRET as string;
 export const signAccessToken = (user: IUser): string => {
   return jwt.sign(
     {
-      sub: user._id.toString,
-      roles: user.role,
+      sub: user._id.toString(),
+      role: user.role,
     },
     JWT_SECRET,
-    {
-      expiresIn: "30min",
-    }
+    { expiresIn: "30min" }
   );
 };
 

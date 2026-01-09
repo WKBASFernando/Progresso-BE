@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import skillRoutes from "./routes/skills";
 import authRoutes from "./routes/authRoutes"
+import userRoutes from "./routes/userRoutes";
 
 dotenv.config();
 
@@ -21,7 +22,8 @@ mongoose
 
 // Use Routes
 app.use("/api/progresso/skill", skillRoutes); 
-app.use("/api/progresso/auth", authRoutes)
+app.use("/api/progresso/auth", authRoutes);
+app.use("/api/progresso/user", userRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

@@ -1,28 +1,24 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-// 1. Define the Interface (This makes it a module)
 export interface ISkill extends Document {
   title: string;
+  description: string;
   category: string;
   prerequisites: mongoose.Types.ObjectId[];
-  position: {
-    x: number;
-    y: number;
-  };
+  position: { x: number; y: number };
+  videoUrl: string; // This will store the YouTube link
 }
 
-// 2. Define the Schema
 const SkillSchema: Schema = new Schema({
-  title: { type: String, required: true, unique: true },
-  description: String,
-  category: { type: String, default: "General" },
+  title: { type: String, required: true },
+  description: { type: String, default: "" },
+  category: { type: String, default: "WEB" },
   prerequisites: [{ type: Schema.Types.ObjectId, ref: "Skill" }],
   position: {
     x: { type: Number, default: 0 },
     y: { type: Number, default: 0 },
   },
+  videoUrl: { type: String, default: "" },
 });
 
-// 3. EXPORT IT (Critical Step)
-// We use 'export default' so you can use 'import Skill from...' in other files
 export default mongoose.model<ISkill>("Skill", SkillSchema);

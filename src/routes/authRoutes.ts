@@ -4,6 +4,7 @@ import {
   getMyDetails,
   register,
   registerAdmin,
+  googleLogin
 } from "../controller/authController";
 import { authenticate } from "../middleware/auth";
 
@@ -13,5 +14,6 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/me", authenticate, getMyDetails);
 router.post("/auth/admin", authenticate, registerAdmin);
+router.post("/google", googleLogin);
 
 export default router;

@@ -2,14 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export enum Role {
   ADMIN = "ADMIN",
-  STUDENT = "STUDENT",
-  TEACHER = "TEACHER",
-}
-
-export enum Status {
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
+  USER = "USER",
 }
 
 export interface IUser extends Document {
@@ -19,7 +12,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: Role[];
-  approved: Status;
+  avatarUrl?: string; // Added for the profile handling we discussed
 }
 
 const userSchema = new Schema<IUser>({
@@ -27,12 +20,12 @@ const userSchema = new Schema<IUser>({
   lastname: { type: String, required: true },
   email: { type: String, unique: true, lowercase: true, required: true },
   password: { type: String, required: true },
-  role: { type: [String], enum: Object.values(Role), default: [Role.STUDENT] },
-  approved: {
-    type: String,
-    enum: Object.values(Status),
-    default: Status.PENDING,
-  }, // 🔥 FIXED HERE
+  role: {
+    type: [String],
+    enum: Object.values(Role),
+    default: [Role.USER],
+  },
+  avatarUrl: { type: String, default: "" }, // Stores Cloudinary URL
 });
 
 export const User = mongoose.model<IUser>("User", userSchema);
