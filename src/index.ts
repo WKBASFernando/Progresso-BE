@@ -10,37 +10,57 @@ dotenv.config();
 
 const app: Express = express();
 
-// Middleware
-// Updated CORS to allow your specific Vercel frontend and local development
+// --- STEP 2: MOVE CORS TO THE TOP ---
+// This must be the first middleware to run!
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://progresso-fe.vercel.app", // Your actual frontend URL
+];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://progresso-fe.vercel.app/"],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("CORS Blocked for origin:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
-app.use(express.json()); // Allows us to read JSON bodies in POST requests
+// Handle the browser's "Preflight" OPTIONS request globally
+app.options("*", cors());
+
+// --- OTHER MIDDLEWARE ---
+app.use(express.json());
 
 // Database Connection
-// It's best to keep the full Atlas URI in your .env file for security
 const mongoURI =
   process.env.MONGO_URI ||
-  "mongodb+srv://sankalpaangelo_db_user:progresso123@progresso.cvd3buh.mongodb.net/progresso";
+  "mongodb+srv://sankalpaangelo_db_user:progresso123@progresso.cvd3buh.mongodb.net/progresso?retryWrites=true&w=majority";
 
 mongoose
   .connect(mongoURI)
   .then(() => console.log("MongoDB Connected Successfully to Atlas"))
   .catch((err) => console.error("MongoDB Connection Error:", err));
 
-// Use Routes
-// Note: Your frontend must now use these full paths (e.g., /api/progresso/auth/google)
+// --- ROUTES ---
+// Prefix all routes with /api/progresso
 app.use("/api/progresso/skill", skillRoutes);
 app.use("/api/progresso/auth", authRoutes);
 app.use("/api/progresso/user", userRoutes);
 
-// Basic health check route to verify the backend is alive
+// Health Check
 app.get("/", (req, res) => {
-  res.send("Progresso API is running...");
+  res.send(
+    "Progresso API is running... Connection: " + mongoose.connection.readyState
+  );
 });
 
 const PORT = process.env.PORT || 5000;
