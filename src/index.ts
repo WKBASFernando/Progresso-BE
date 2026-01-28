@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import skillRoutes from "./routes/skills";
 import authRoutes from "./routes/authRoutes";
 import userRoutes from "./routes/userRoutes";
+import aiRoutes from "./routes/aiRoutes"
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ mongoose
 app.use("/api/progresso/skill", skillRoutes);
 app.use("/api/progresso/auth", authRoutes);
 app.use("/api/progresso/user", userRoutes);
+app.use("/api/progresso/ai", aiRoutes);
 
 // Health Check
 app.get("/", (req, res) => {
