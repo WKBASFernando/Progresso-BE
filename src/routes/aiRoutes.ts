@@ -14,7 +14,9 @@ router.post("/chat", async (req: any, res) => {
     const { message, currentSkill } = req.body;
 
     // 1. Configure the Model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash-latest",
+    });
     // 2. The Prompt (The "Brain" of your mentor)
     const prompt = `
       You are "Matrix AI", a witty and helpful coding mentor inside a game called "Progresso".
