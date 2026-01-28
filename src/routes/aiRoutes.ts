@@ -33,7 +33,9 @@ router.post("/chat", async (req: any, res) => {
     const { message, currentSkill } = req.body;
 
     // Use "gemini-1.5-flash" which is the standard free model right now
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-lite-001",
+    });
 
     const prompt = `
       You are "Matrix AI", a witty and helpful coding mentor inside a game called "Progresso".
