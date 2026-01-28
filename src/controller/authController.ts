@@ -4,31 +4,41 @@ import bcrypt from "bcryptjs";
 import { signAccessToken, signRefreshToken } from "../utils/token";
 import { AuthRequest } from "../middleware/auth";
 import { OAuth2Client } from "google-auth-library";
-import axios from "axios";
 
+// Initialize Google Client with your Environment Variable
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const googleLogin = async (req: Request, res: Response) => {
-  const { token } = req.body; 
+  const { token } = req.body;
   try {
-    const googleResponse = await axios.get(
-      `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`
-    );
+    // Verify the Google ID Token securely instead of using a standard axios GET request
+    // This handles the "credential" returned by Google One Tap/Login buttons
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
 
-    const { email, given_name, family_name, picture } = googleResponse.data;
+    const payload = ticket.getPayload();
 
-    if (!email) {
-      return res.status(400).json({ message: "Google authentication failed" });
+    if (!payload || !payload.email) {
+      return res
+        .status(400)
+        .json({
+          message: "Google authentication failed: Invalid token payload",
+        });
     }
+
+    const { email, given_name, family_name, picture } = payload;
 
     let user = await User.findOne({ email });
 
+    // Create user if they don't exist (Social Sign-on)
     if (!user) {
       user = new User({
         firstname: given_name,
         lastname: family_name || "",
         email: email,
-        password: Math.random().toString(36).slice(-10), 
+        password: Math.random().toString(36).slice(-10), // Random password for social users
         avatarUrl: picture,
         role: [Role.USER],
       });
@@ -46,7 +56,7 @@ export const googleLogin = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error("Google Auth Error:", error.response?.data || error.message);
+    console.error("Google Auth Error:", error.message);
     res
       .status(500)
       .json({ message: "Internal server error during Google login" });
@@ -61,6 +71,7 @@ export const register = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    // Validate role input
     if (role !== Role.ADMIN && role !== Role.USER) {
       return res.status(400).json({ message: "Invalid role assigned" });
     }
@@ -77,7 +88,7 @@ export const register = async (req: Request, res: Response) => {
       lastname,
       email,
       password: hashedPassword,
-      role: [role], 
+      role: [role],
     });
 
     await newUser.save();
@@ -91,7 +102,9 @@ export const register = async (req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res.status(500).json({ message: err?.message });
+    res
+      .status(500)
+      .json({ message: err?.message || "Error during registration" });
   }
 };
 
@@ -116,18 +129,19 @@ export const login = async (req: Request, res: Response) => {
       message: "Success",
       data: {
         email: existingUser.email,
-        roles: existingUser.role, 
+        roles: existingUser.role,
         accessToken,
         refreshToken,
       },
     });
   } catch (err: any) {
-    res.status(500).json({ message: err?.message });
+    res.status(500).json({ message: err?.message || "Error during login" });
   }
 };
 
 export const getMyDetails = async (req: AuthRequest, res: Response) => {
   try {
+    // req.user is populated by the 'authenticate' middleware
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -144,10 +158,17 @@ export const getMyDetails = async (req: AuthRequest, res: Response) => {
       data: user,
     });
   } catch (err: any) {
-    res.status(500).json({ message: err?.message });
+    res
+      .status(500)
+      .json({ message: err?.message || "Error fetching user details" });
   }
 };
 
 export const registerAdmin = (req: Request, res: Response) => {
-  res.status(501).json({ message: "Not implemented. Use standard register." });
+  res
+    .status(501)
+    .json({
+      message:
+        "Not implemented. Use standard register endpoint with ADMIN role.",
+    });
 };
