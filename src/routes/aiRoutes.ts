@@ -50,4 +50,22 @@ router.post("/chat", async (req: any, res) => {
   }
 });
 
+// Add this temporarily to src/routes/aiRoutes.ts
+
+router.get("/check-models", async (req, res) => {
+  try {
+    // 1. Get the key from the environment
+    const key = process.env.GEMINI_API_KEY;
+    
+    // 2. Ask Google: "What models can this key see?"
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+    const data = await response.json();
+    
+    // 3. Send the list back to the browser
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
