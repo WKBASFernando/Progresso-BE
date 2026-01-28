@@ -35,7 +35,7 @@ app.use(
 );
 
 // Handle the browser's "Preflight" OPTIONS request globally
-app.options("*", cors());
+app.options(/(.*)/, cors());
 
 // --- OTHER MIDDLEWARE ---
 app.use(express.json());
