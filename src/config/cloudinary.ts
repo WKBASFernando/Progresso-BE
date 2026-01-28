@@ -15,7 +15,7 @@ const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
 
 if (missingVars.length > 0) {
   throw new Error(
-    `⚠️  Missing required Cloudinary environment variables: ${missingVars.join(
+    ` Missing required Cloudinary environment variables: ${missingVars.join(
       ", "
     )}\n` + `    Please add them to your .env file.`
   );
