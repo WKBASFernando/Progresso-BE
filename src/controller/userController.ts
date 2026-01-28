@@ -4,14 +4,31 @@ import { AuthRequest } from "../middleware/auth";
 import cloudinary from "../config/cloudinary";
 
 // 1. Get Profile Details
-export const getProfile = async (req: AuthRequest, res: Response) => {
+// Updated Controller Logic
+export const getProfile = async (req: any, res: Response) => {
   try {
-    const user = await User.findById(req.user.sub).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // IMPORTANT: Your middleware uses 'sub', so we must use 'req.user.sub'
+    const userId = req.user.sub; 
+    
+    const user = await User.findById(userId).select("-password").populate("completedSkills");
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    res.status(200).json({ data: user });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
+    // Explicitly send the progress data
+    res.json({
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      xp: user.xp || 0,
+      level: user.level || 1,
+      completedSkills: user.completedSkills || [],
+      role: user.role
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
