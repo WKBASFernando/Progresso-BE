@@ -1,73 +1,96 @@
-import express, { Request, Response } from "express";
+import { Router } from "express";
 import Skill from "../models/Skill";
+import { authenticate, authorize } from "../middleware/auth"; // Ensure you have these
 
-const router = express.Router();
+const router = Router();
 
-// 1. GET ALL SKILLS
-router.get("/", async (req: Request, res: Response) => {
+// 1. GET ALL SKILLS (Public or Protected)
+router.get("/", async (req, res) => {
   try {
     const skills = await Skill.find().populate("prerequisites");
     res.json(skills);
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// 2. GET SINGLE SKILL BY ID (Fixes the 404 Transmission Error)
-router.get("/:id", async (req: Request, res: Response) => {
-  try {
-    // This allows the SkillDetail page to fetch the specific lesson data
-    const skill = await Skill.findById(req.params.id).populate("prerequisites");
-    if (!skill) {
-      return res
-        .status(404)
-        .json({ message: "Skill node not found in database" });
-    }
-    res.json(skill);
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// 3. CREATE NEW SKILL (Fixes missing VideoURL and Description)
-router.post("/", async (req: Request, res: Response) => {
-  // Added description and videoUrl to the destructuring
-  const { title, description, category, videoUrl, prerequisites, position } =
-    req.body;
-
-  const skill = new Skill({
-    title,
-    description: description || "", // Ensure data is mapped to the schema
-    category,
-    videoUrl: videoUrl || "", // Ensure data is mapped to the schema
-    prerequisites: prerequisites || [],
-    position: position || { x: 0, y: 0 },
-  });
-
-  try {
-    const newSkill = await skill.save();
-    res.status(201).json(newSkill);
-  } catch (err: any) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-// 4. AUTO-SYNC POSITION
-router.patch("/:id/position", async (req, res) => {
-  try {
-    const { position } = req.body;
-    await Skill.findByIdAndUpdate(req.params.id, { position });
-    res.json({ message: "Position synced" });
   } catch (err) {
-    res.status(500).json({ message: "Sync failed" });
+    res.status(500).json({ message: "Error loading Matrix" });
   }
 });
 
-// 5. DELETE NODE
-router.delete("/:id", async (req, res) => {
+// 2. GET SINGLE SKILL
+router.get("/:id", async (req, res) => {
+  try {
+    const skill = await Skill.findById(req.params.id).populate("prerequisites");
+    if (!skill) return res.status(404).json({ message: "Node not found" });
+    res.json(skill);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching node" });
+  }
+});
+
+// --- ADMIN ROUTES BELOW (Protected) ---
+
+// 3. CREATE NEW SKILL
+router.post("/", authenticate, authorize(["ADMIN"]), async (req, res) => {
+  try {
+    const newSkill = new Skill(req.body);
+    const savedSkill = await newSkill.save();
+    res.status(201).json(savedSkill);
+  } catch (err) {
+    res.status(500).json({ message: "Deployment failed" });
+  }
+});
+
+// 4. UPDATE POSITION (Drag & Drop Save)
+router.patch(
+  "/:id/position",
+  authenticate,
+  authorize(["ADMIN"]),
+  async (req: any, res: any) => {
+    try {
+      const { position } = req.body;
+      const skill = await Skill.findByIdAndUpdate(
+        req.params.id,
+        { position },
+        { new: true }
+      );
+      if (!skill)
+        return res.status(404).json({ message: "Node lost in space" });
+      res.json(skill);
+    } catch (err) {
+      res.status(500).json({ message: "Position sync failed" });
+    }
+  }
+);
+
+// 5. ADD PREREQUISITE (The Missing Route for Lines!)
+router.patch(
+  "/:id/prerequisite",
+  authenticate,
+  authorize(["ADMIN"]),
+  async (req: any, res: any) => {
+    try {
+      const { prerequisiteId } = req.body;
+
+      const skill = await Skill.findById(req.params.id);
+      if (!skill)
+        return res.status(404).json({ message: "Target node not found" });
+
+      // Prevent duplicates
+      if (!skill.prerequisites.includes(prerequisiteId)) {
+        skill.prerequisites.push(prerequisiteId);
+        await skill.save();
+      }
+
+      res.json(skill);
+    } catch (err) {
+      res.status(500).json({ message: "Neural link failed" });
+    }
+  }
+);
+
+// 6. DELETE SKILL
+router.delete("/:id", authenticate, authorize(["ADMIN"]), async (req, res) => {
   try {
     await Skill.findByIdAndDelete(req.params.id);
-    res.json({ message: "Node terminated" });
+    res.json({ message: "Node deleted from Matrix" });
   } catch (err) {
     res.status(500).json({ message: "Deletion failed" });
   }
