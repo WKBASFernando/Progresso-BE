@@ -14,7 +14,7 @@ const app: Express = express();
 // Updated CORS to allow your specific Vercel frontend and local development
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://progresso-te.vercel.app"],
+    origin: ["http://localhost:5173", "https://progresso-fe.vercel.app/"],
     credentials: true,
   })
 );
